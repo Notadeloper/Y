@@ -12,11 +12,11 @@ export const createPost = async (req, res) => {
 
         const user = await User.findById(userId);
         if (!user) {
-            return res.error(404).json({ error: "User not found" });
+            return res.status(404).json({ error: "User not found" });
         }
 
         if (!text && !img) {
-            return res.error(400).json({ error: "Post must have text or image" });
+            return res.status(400).json({ error: "Post must have text or image" });
         }
 
         if (img) {
@@ -27,7 +27,7 @@ export const createPost = async (req, res) => {
         const newPost = new Post({
             user: userId,
             text,
-            img
+            img,
         });
 
         await newPost.save();
@@ -42,11 +42,11 @@ export const deletePost = async (req, res) => {
     try {
         const post = await Post.findById(req.params.postId);
         if (!post) {
-            return res.error(404).json({ error: "Post not found" });
+            return res.status(404).json({ error: "Post not found" });
         }
 
         if (post.user.toString() !== req.user._id.toString()) {
-            return res.error(401).json({ error: "Not authorised to delete this post!" });
+            return res.status(401).json({ error: "Not authorised to delete this post!" });
         }
 
         if (post.img) {
@@ -70,12 +70,12 @@ export const commentPost = async (req, res) => {
         const userId = req.user._id;
 
         if (!text) {
-            return res.error(400).json({ error: "Post must have text" });
+            return res.status(400).json({ error: "Post must have text" });
         }
         const post = await Post.findById(postId);
 
         if (!post) {
-            return res.error(404).json({ error: "Post not found!" });
+            return res.status(404).json({ error: "Post not found!" });
         }
 
         const comment = { user: userId, text }
