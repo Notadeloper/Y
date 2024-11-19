@@ -11,8 +11,10 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
+import useFollow from "../../hooks/useFollow";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
 	const [coverImg, setCoverImg] = useState(null);
@@ -23,8 +25,10 @@ const ProfilePage = () => {
 	const profileImgRef = useRef(null);
 
     const { username } = useParams();
+    const queryClient = useQueryClient();
 
-	const isMyProfile = true;
+    const {follow, isPending: isPendingFollow } = useFollow();
+    const {data: authUser } = useQuery({ queryKey: ["authUser"]});
 
     const {data: user, isLoading, refetch, isRefetching } = useQuery({
         queryKey: ["userProfile"],
@@ -41,7 +45,44 @@ const ProfilePage = () => {
         }
     })
 
+    const {mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
+        mutationFn: async () => {
+            try {
+                const res = await fetch("/api/users/update", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        coverImg,
+                        profileImg
+                    }),
+                    
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || "Something went wrong");
+                return data;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        onSuccess: () => {
+            toast.success("Profile updated sucessfully");
+            Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+                queryClient.invalidateQueries({ queryKey: ["userProfile"]})
+            ])
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        }
+    })
+
+    const isMyProfile = authUser._id === user?._id;
     const memberSinceDate = formatMemberSinceDate(user?.createdAt);
+    const amIFollowing = authUser?.following.includes(user?._id);
 
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
@@ -123,21 +164,23 @@ const ProfilePage = () => {
 								</div>
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
-								{isMyProfile && <EditProfileModal />}
+								{isMyProfile && <EditProfileModal authUser={authUser}/>}
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
-										onClick={() => alert("Followed successfully")}
+										onClick={() => follow(user?._id)}
 									>
-										Follow
+										{isPendingFollow && "Loading..."}
+                                        {!isPendingFollow && amIFollowing && "Unfollow"}
+                                        {!isPendingFollow && !amIFollowing && "Follow"}
 									</button>
 								)}
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => alert("Profile updated successfully")}
+										onClick={() => updateProfile()}
 									>
-										Update
+										{isUpdatingProfile ? "Updating..." : "Save"}
 									</button>
 								)}
 							</div>
