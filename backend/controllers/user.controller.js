@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { v2 as cloudinary } from "cloudinary";
 
+import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
 
@@ -151,5 +152,54 @@ export const updateUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
         console.log("Error in updateUser: ", error.message);
+    }
+}
+
+export const bookmarkUnbookmarkPost = async (req, res) => {
+    try {
+        const user = req.user
+        const { postId } = req.params;
+
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found!" });
+        }
+
+        const isBookmarked = user.bookmarkedPosts.includes(postId);
+        
+        if (isBookmarked) {
+            user.bookmarkedPosts = user.bookmarkedPosts.filter((id) => id.toString() !== postId);
+            await user.save();
+        } else {
+            user.bookmarkedPosts.push(postId);
+            await user.save();
+        }
+        return res.status(200).json(user.bookmarkedPosts);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+        console.error("Error in bookmarkUnbookmarkPost: ", error.message);
+    }
+}
+
+export const getBookmarkedPosts = async (req, res) => {
+    try {
+        const user = req.user;
+
+        const bookmarkedPosts = await Post.find({ _id: {$in: user.bookmarkedPosts }})
+        .populate({
+            path: "user",
+            select: "-password"
+        })
+        .populate({
+            path: "comments.user",
+            select: "-password"
+        })
+
+        res.status(200).json(bookmarkedPosts);
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+        console.log("Error in getBookmarkedPosts: ", error.message);
     }
 }

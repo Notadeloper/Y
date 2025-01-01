@@ -9,12 +9,12 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
 import useFollow from "../../hooks/useFollow";
 import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
-const ProfilePage = () => {
+const BookmarkPage = () => {
 	const [coverImg, setCoverImg] = useState(null);
 	const [profileImg, setProfileImg] = useState(null);
 	const [feedType, setFeedType] = useState("posts");
@@ -41,11 +41,6 @@ const ProfilePage = () => {
             }
         }
     })
-
-	const queryClient = useQueryClient();
-	// FIX THIS PART
-	const cachedPosts = queryClient.getQueryData(["posts", feedType, username]);
-	const postsCount = cachedPosts ? cachedPosts.length : 0;
 
     const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
 
@@ -84,7 +79,7 @@ const ProfilePage = () => {
 								</Link>
 								<div className='flex flex-col'>
 									<p className='font-bold text-lg'>{user?.fullName}</p>
-									<span className='text-sm text-slate-500'>{postsCount} posts</span>
+									<span className='text-sm text-slate-500'>{POSTS?.length} posts</span>
 								</div>
 							</div>
 							{/* COVER IMG */}
@@ -228,4 +223,4 @@ const ProfilePage = () => {
 		</>
 	);
 };
-export default ProfilePage;
+export default BookmarkPage;
