@@ -9,7 +9,7 @@ router.get("/suggested", protectRoute, getSuggestedUsers);
 router.post("/follow/:id", protectRoute, followUnfollowUser);
 router.post("/update", protectRoute, updateUser);
 // Modifies User so belongs here IMO
-router.post("/bookmark/:postId", protectRoute, bookmarkUnbookmarkPost);
+router.post("/bookmarks/:postId", protectRoute, bookmarkUnbookmarkPost);
 router.get("/bookmarks/:id", protectRoute, getBookmarkedPosts);
 
 
